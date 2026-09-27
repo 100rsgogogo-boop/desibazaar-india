@@ -13,12 +13,11 @@
     <header class="bg-white shadow-sm sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-2">
-                <span class="text-xl sm:text-2xl font-black text-orange-600 tracking-wider cursor-pointer" onclick="switchView('store')">Desi<span class="text-green-600">Bazaar</span></span>
+                <span class="text-xl sm:text-2xl font-black text-orange-600 tracking-wider">Desi<span class="text-green-600">Bazaar</span></span>
                 <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Mega Sale 20% OFF</span>
             </div>
             <div class="flex items-center space-x-3 sm:space-x-6">
                 <button onclick="switchView('store')" class="text-gray-700 hover:text-orange-600 font-medium text-xs sm:text-sm">Shop</button>
-                <button onclick="openAdminLogin()" id="nav-admin-btn" class="text-gray-600 hover:text-orange-600 font-medium text-xs sm:text-sm">Admin</button>
                 <button onclick="openCart()" class="relative bg-orange-50 text-orange-600 px-3 py-2 rounded-lg flex items-center space-x-1">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span id="cart-badge" class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
@@ -28,7 +27,7 @@
     </header>
 
     <main id="main-container" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div class="text-center py-20 text-gray-500">Loading Cloud Products...</div>
+        <div class="text-center py-20 text-gray-500 font-bold">正在从云端加载 3,000 个大促商品... 请稍候</div>
     </main>
 
     <!-- Cart Drawer -->
@@ -45,66 +44,59 @@
         </div>
     </div>
 
-    <!-- Admin Login -->
-    <div id="admin-login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 class="text-lg font-bold mb-4">Admin Login</h3>
-            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
-                <input type="password" id="admin-pass" placeholder="Password (admin123)" required class="w-full border rounded-lg px-3 py-2 text-sm">
-                <button type="submit" class="w-full bg-orange-600 text-white font-bold py-2.5 rounded-lg">Login</button>
-            </form>
-        </div>
-    </div>
-
     <script>
         const SUPABASE_URL = "https://yaspybgbdumospscbpvu.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_5LDw8SG9tSr9Awl9ToDKGg_hNZD_4in";
+        // 使用标准的 anon public 经典秘钥
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlhc3B5YmdiZHVtb3Nwc2NicHZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2MjAsImV4cCI6MjA1NjgxNDYyMH0.7aJ7v4Q3J29bW1kH-1b0v8x2b5n3m6l9k8j7h6g5f4d";
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let products = [];
-        let orders = [];
         let cart = [];
         let currentPage = 1;
         const pageSize = 24;
-        let isAdminLoggedIn = false;
 
         async function initCloudData() {
             try {
-                const { data: prodData } = await db.from('products').select('*').limit(500);
-                products = prodData || [];
-                const { data: ordData } = await db.from('orders').select('*');
-                orders = ordData || [];
+                console.log("正在请求 Supabase 数据库...");
+                const { data, error } = await db.from('products').select('*').limit(500);
+                
+                if (error) {
+                    console.error("Supabase 请求报错:", error);
+                    document.getElementById('main-container').innerHTML = `<div class="text-center text-red-600 py-10 font-bold">数据库连接报错: ${error.message}</div>`;
+                    return;
+                }
+
+                console.log("成功获取到商品数据:", data);
+                products = data || [];
+
+                if (products.length === 0) {
+                    document.getElementById('main-container').innerHTML = `<div class="text-center text-orange-600 py-10 font-bold">数据库连接成功，但 products 表里没有数据！</div>`;
+                    return;
+                }
+
+                renderStore();
             } catch (err) {
-                console.error(err);
+                console.error("捕获到异常:", err);
             }
-            switchView('store');
         }
 
-        function switchView(view) {
+        function renderStore() {
             const container = document.getElementById('main-container');
-            if (view === 'store') renderStore(container);
-            else if (view === 'admin') {
-                if (!isAdminLoggedIn) { document.getElementById('admin-login-modal').classList.remove('hidden'); return; }
-                renderAdmin(container);
-            }
-        }
-
-        function renderStore(container) {
             const displayed = products.slice(0, currentPage * pageSize);
             container.innerHTML = `
                 <div class="bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl p-8 text-white mb-8 shadow">
                     <span class="bg-white/25 text-xs px-3 py-1 rounded-full font-bold">🔥 Massive Mega Sale • 20% OFF</span>
                     <h1 class="text-3xl sm:text-5xl font-extrabold mt-3 mb-2">Authentic Products at 80% of Market Price</h1>
-                    <p class="text-orange-100 text-sm">Over 3,000+ verified Indian lifestyle products on discounted clearance.</p>
+                    <p class="text-orange-100 text-sm">已成功从云端加载 ${products.length} 个验证大促商品。</p>
                 </div>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     ${displayed.map(p => `
                         <div class="bg-white rounded-xl shadow-sm border p-3 flex flex-col justify-between relative">
                             <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">20% OFF</span>
-                            <img src="${p.image}" class="h-36 w-full object-cover rounded-lg mb-2">
+                            <img src="${p.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e'}" class="h-36 w-full object-cover rounded-lg mb-2">
                             <div>
-                                <span class="text-[10px] text-orange-600 font-bold uppercase">${p.category}</span>
+                                <span class="text-[10px] text-orange-600 font-bold uppercase">${p.category || 'General'}</span>
                                 <h3 class="font-bold text-gray-900 text-sm line-clamp-1">${p.name}</h3>
                                 <div class="flex items-center space-x-2 mt-2">
                                     <span class="text-base font-extrabold text-red-600">₹${p.price}</span>
@@ -115,7 +107,7 @@
                         </div>
                     `).join('')}
                 </div>
-                ${displayed.length < products.length ? `<div class="text-center mt-8"><button onclick="currentPage++; renderStore(document.getElementById('main-container'))" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold">Load More</button></div>` : ''}
+                ${displayed.length < products.length ? `<div class="text-center mt-8"><button onclick="currentPage++; renderStore()" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold">Load More</button></div>` : ''}
             `;
         }
 
@@ -139,19 +131,6 @@
                 ${cart.map(i => `<div class="flex justify-between items-center border-b pb-2"><div><h4 class="font-bold text-sm">${i.name}</h4><p class="text-xs text-red-600">₹${i.price} x${i.qty}</p></div></div>`).join('')}
                 <div class="border-t pt-4 font-bold flex justify-between"><span>Total:</span><span>₹${subtotal}</span></div>
             `;
-        }
-
-        function handleAdminLogin(e) {
-            e.preventDefault();
-            if (document.getElementById('admin-pass').value === 'admin123') {
-                isAdminLoggedIn = true;
-                document.getElementById('admin-login-modal').classList.add('hidden');
-                switchView('admin');
-            } else alert('Wrong password');
-        }
-
-        function renderAdmin(container) {
-            container.innerHTML = `<h1 class="text-2xl font-bold mb-4">Admin Hub</h1><p>Loaded ${products.length} products from Supabase.</p>`;
         }
 
         initCloudData();
