@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DesiBazaar India - Cloud Connected E-commerce Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-orange-500 selection:text-white pb-16 sm:pb-0">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl sm:text-2xl font-black text-orange-600 tracking-wider cursor-pointer" onclick="switchView('store')">Desi<span class="text-green-600">Bazaar</span></span>
+            </div>
+            <div class="flex items-center space-x-3 sm:space-x-6">
+                <button onclick="switchView('store')" id="nav-store-btn" class="text-gray-700 hover:text-orange-600 font-medium text-xs sm:text-sm">Shop</button>
+                <button onclick="openAdminLogin()" id="nav-admin-btn" class="text-gray-600 hover:text-orange-600 font-medium text-xs sm:text-sm flex items-center space-x-1">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span class="hidden sm:inline">Admin</span>
+                </button>
+                <button onclick="openCart()" class="relative bg-orange-50 text-orange-600 p-2 sm:px-3 sm:py-2 rounded-full sm:rounded-lg transition flex items-center space-x-1">
+                    <i class="fa-solid fa-cart-shopping text-base sm:text-lg"></i>
+                    <span class="font-bold text-xs hidden sm:inline">Cart</span>
+                    <span id="cart-badge" class="absolute -top-1 -right-1 sm:-top-2 sm:-right-3 bg-orange-600 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-bold">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main View Container -->
+    <main id="main-container" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div class="text-center py-20 text-gray-500">Connecting to Cloud Database...</div>
+    </main>
+
+    <!-- Slide-over Cart & Checkout Drawer -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 overflow-hidden hidden">
+        <div class="absolute inset-0 bg-black/50 transition-opacity" onclick="closeCart()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+            <div class="w-full sm:w-screen sm:max-w-md bg-white shadow-xl flex flex-col">
+                <div class="p-4 border-b flex items-center justify-between bg-gray-50">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Your Shopping Cart</h3>
+                    <button onclick="closeCart()" class="text-gray-400 hover:text-gray-500 p-2">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div id="cart-body" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <!-- Cart items / Checkout Form -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Admin Portal Login</h3>
+                <button onclick="closeAdminLogin()" class="text-gray-400 hover:text-gray-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+                    <input type="password" id="admin-pass" placeholder="Default: admin123" required class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-orange-600 text-white font-bold py-3 rounded-lg hover:bg-orange-700 transition text-sm">Login to Cloud Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12 py-6 text-center text-xs sm:text-sm text-gray-500">
+        <p>&copy; 2026 DesiBazaar India. Cloud Database Powered E-commerce Solution.</p>
+    </footer>
+
+    <!-- Application Script with Supabase Integration -->
+    <script>
+        // Supabase 云端配置
+        const SUPABASE_URL = "https://yaspybgbdumospscbpvu.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_5LDw8SG9tSr9Awl9ToDKGg_hNZD_4in";
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let products = [];
+        let orders = [];
+        let cart = [];
+        let currentView = 'store';
+        let isAdminLoggedIn = false;
+
+        // 初始化加载云端数据
+        async function initCloudData() {
+            try {
+                // 1. 获取云端商品
+                const { data: prodData, error: prodErr } = await db.from('products').select('*');
+                if (prodErr) throw prodErr;
+
+                if (!prodData || prodData.length === 0) {
+                    // 如果云端是空的，自动写入默认的印度商品
+                    const defaultProducts = [
+                        { id: 1, name: "Banarasi Silk Saree", price: 3499, category: "Ethnic Wear", image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80", description: "Handwoven pure silk saree with traditional zari work.", stock: 15 },
+                        { id: 2, name: "boAt Rockerz 450 Headphones", price: 1499, category: "Electronics", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80", description: "Immersive sound, 15H playback, lightweight wireless design.", stock: 25 },
+                        { id: 3, name: "Royal Spice Gift Box (Kashmir Saffron)", price: 899, category: "Groceries", image: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80", description: "Premium organic spices sourced directly from Indian farms.", stock: 40 },
+                        { id: 4, name: "Handcrafted Terracotta Chai Kulhads", price: 499, category: "Home & Kitchen", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80", description: "Traditional clay cups for authentic earthy tea experience.", stock: 30 }
+                    ];
+                    await db.from('products').insert(defaultProducts);
+                    products = defaultProducts;
+                } else {
+                    products = prodData;
+                }
+
+                // 2. 获取云端订单
+                const { data: ordData, error: ordErr } = await db.from('orders').select('*');
+                if (!ordErr && ordData) {
+                    orders = ordData;
+                }
+            } catch (err) {
+                console.error("Cloud connection warning:", err.message);
+            }
+            switchView('store');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const container = document.getElementById('main-container');
+            if (view === 'store') {
+                renderStoreView(container);
+            } else if (view === 'admin') {
+                if (!isAdminLoggedIn) {
+                    openAdminLogin();
+                    return;
+                }
+                renderAdminView(container);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- STORE VIEW ---
+        function renderStoreView(container) {
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl sm:rounded-2xl p-5 sm:p-12 text-white mb-6 sm:mb-10 shadow-md flex flex-col md:flex-row items-center justify-between">
+                    <div class="mb-4 md:mb-0 max-w-xl">
+                        <span class="bg-white/20 text-[10px] sm:text-xs uppercase px-2.5 py-1 rounded-full font-semibold">Pan-India Express Cloud Delivery</span>
+                        <h1 class="text-2xl sm:text-5xl font-bold mt-2 sm:mt-3 mb-2 sm:mb-4 leading-snug">Authentic Indian Products & Lifestyle</h1>
+                        <p class="text-orange-100 text-xs sm:text-base mb-4">Handloom, Spices, Electronics & Festive Specials synced via Cloud Database.</p>
+                        <a href="#products-section" class="bg-white text-orange-600 font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg shadow text-xs sm:text-sm hover:bg-orange-50 transition inline-block">Shop Catalog</a>
+                    </div>
+                    <div class="text-5xl sm:text-8xl opacity-90 hidden sm:block">🇮🇳</div>
+                </div>
+
+                <div id="products-section" class="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Cloud Catalog (INR)</h2>
+                    <span class="text-xs text-gray-500 bg-white px-2.5 py-1 rounded-md border">Live Supabase Sync</span>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    ${products.map(p => `
+                        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                            <img src="${p.image}" alt="${p.name}" class="h-36 sm:h-48 w-full object-cover">
+                            <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <span class="text-[10px] sm:text-xs text-orange-600 font-semibold uppercase">${p.category}</span>
+                                    <h3 class="font-bold text-gray-900 text-xs sm:text-sm mt-0.5 mb-1 line-clamp-1">${p.name}</h3>
+                                    <p class="text-gray-500 text-[11px] sm:text-xs mb-2 line-clamp-2">${p.description}</p>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                                        <span class="text-sm sm:text-lg font-extrabold text-gray-900">₹${p.price.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <button onclick="addToCart(${p.id})" ${p.stock <= 0 ? 'disabled class="w-full mt-2 bg-gray-200 text-gray-400 py-2 rounded-lg text-xs cursor-not-allowed font-medium"' : 'class="w-full mt-2 bg-orange-600 text-white py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-700 transition"'}>
+                                        ${p.stock <= 0 ? 'Sold Out' : 'Add to Cart'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- CART & CHECKOUT LOGIC ---
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) return;
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.qty < product.stock) {
+                    existing.qty += 1;
+                } else {
+                    alert("Reached maximum stock limit.");
+                    return;
+                }
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartBadge();
+            openCart();
+            renderCartContent();
+        }
+
+        function updateCartBadge() {
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-badge').innerText = totalQty;
+        }
+
+        function openCart() {
+            document.getElementById('cart-drawer').classList.remove('hidden');
+            renderCartContent();
+        }
+
+        function closeCart() {
+            document.getElementById('cart-drawer').classList.add('hidden');
+        }
+
+        function changeQty(productId, delta) {
+            const item = cart.find(i => i.id === productId);
+            const product = products.find(p => p.id === productId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty > product.stock) item.qty = product.stock;
+                if (item.qty <= 0) cart = cart.filter(i => i.id !== productId);
+            }
+            updateCartBadge();
+            renderCartContent();
+        }
+
+        function renderCartContent() {
+            const body = document.getElementById('cart-body');
+            if (cart.length === 0) {
+                body.innerHTML = `
+                    <div class="text-center py-16 text-gray-400">
+                        <i class="fa-solid fa-cart-shopping text-4xl mb-3"></i>
+                        <p class="text-sm">Your cart is empty.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const shipping = subtotal > 999 ? 0 : 99;
+            const total = subtotal + shipping;
+
+            body.innerHTML = `
+                <div class="space-y-3">
+                    ${cart.map(item => `
+                        <div class="flex items-center justify-between border-b pb-3">
+                            <div class="flex items-center space-x-3">
+                                <img src="${item.image}" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg">
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1">${item.name}</h4>
+                                    <p class="text-xs text-gray-500">₹${item.price} x${item.qty}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="changeQty(${item.id}, -1)" class="w-7 h-7 bg-gray-100 rounded flex items-center justify-center font-bold text-gray-600">-</button>
+                                <span class="text-sm font-semibold">${item.qty}</span>
+                                <button onclick="changeQty(${item.id}, 1)" class="w-7 h-7 bg-gray-100 rounded flex items-center justify-center font-bold text-gray-600">+</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bg-gray-50 p-3 sm:p-4 rounded-xl space-y-2 mt-4 text-xs sm:text-sm">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Subtotal</span>
+                        <span>₹${subtotal.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>Pan-India Shipping</span>
+                        <span>${shipping === 0 ? 'FREE' : '₹' + shipping}</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-gray-900 text-sm sm:text-base border-t pt-2">
+                        <span>Total Amount</span>
+                        <span>₹${total.toLocaleString('en-IN')}</span>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h4 class="font-bold text-gray-900 text-sm mb-3"><i class="fa-solid fa-location-dot text-orange-600 mr-1"></i> Indian Address & Contact</h4>
+                    <form onsubmit="handleCheckout(event, ${total})" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">Full Name</label>
+                            <input type="text" required id="cust-name" placeholder="Aarav Sharma" class="w-full mt-1 border rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">Mobile Number (+91)</label>
+                            <div class="flex mt-1">
+                                <span class="bg-gray-100 border border-r-0 rounded-l-lg px-3 py-2 text-sm text-gray-600">+91</span>
+                                <input type="tel" required pattern="[0-9]{10}" id="cust-phone" placeholder="9876543210" class="w-full border rounded-r-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">Street Address & Landmark</label>
+                            <input type="text" required id="cust-address" placeholder="Flat / Building / Locality" class="w-full mt-1 border rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600">City</label>
+                                <input type="text" required id="cust-city" placeholder="Mumbai" class="w-full mt-1 border rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600">PIN Code (6 digits)</label>
+                                <input type="text" required pattern="[0-9]{6}" id="cust-pincode" placeholder="400001" class="w-full mt-1 border rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">State</label>
+                            <select id="cust-state" class="w-full mt-1 border rounded-lg px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Telangana">Telangana</option>
+                                <option value="Other">Other States</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow hover:bg-green-700 transition mt-4 flex items-center justify-center space-x-2 text-sm">
+                            <i class="fa-solid fa-lock text-xs"></i>
+                            <span>Place Order & Sync to Cloud</span>
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function handleCheckout(event, totalAmount) {
+            event.preventDefault();
+            const orderData = {
+                id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+                date: new Date().toLocaleString(),
+                customer: {
+                    name: document.getElementById('cust-name').value,
+                    phone: document.getElementById('cust-phone').value,
+                    address: document.getElementById('cust-address').value,
+                    city: document.getElementById('cust-city').value,
+                    pincode: document.getElementById('cust-pincode').value,
+                    state: document.getElementById('cust-state').value,
+                },
+                items: [...cart],
+                total: totalAmount,
+                status: 'Processing'
+            };
+
+            // 1. 同步更新本地和云端商品库存
+            for (let cartItem of cart) {
+                const p = products.find(prod => prod.id === cartItem.id);
+                if (p) {
+                    p.stock -= cartItem.qty;
+                    await db.from('products').update({ stock: p.stock }).eq('id', p.id);
+                }
+            }
+
+            // 2. 将订单写入 Supabase 云端
+            const { error } = await db.from('orders').insert([orderData]);
+            if (error) {
+                alert("Order saved locally, but cloud sync failed: " + error.message);
+            } else {
+                orders.unshift(orderData);
+                alert(`Order Placed Successfully!\nOrder ID: ${orderData.id}\nSuccessfully synced to your Supabase Cloud Database!`);
+            }
+
+            cart = [];
+            updateCartBadge();
+            closeCart();
+            switchView('store');
+        }
+
+        // --- ADMIN LOGIN & DASHBOARD VIEW ---
+        function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
+        function closeAdminLogin() { document.getElementById('admin-login-modal').classList.add('hidden'); }
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin123' || pass === 'admin') {
+                isAdminLoggedIn = true;
+                closeAdminLogin();
+                document.getElementById('nav-admin-btn').innerHTML = `<i class="fa-solid fa-gauge text-orange-600"></i><span class="hidden sm:inline">Admin Hub</span>`;
+                switchView('admin');
+            } else {
+                alert("Incorrect password! Default: admin123");
+            }
+        }
+
+        function renderAdminView(container) {
+            const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+            container.innerHTML = `
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b gap-3">
+                    <div>
+                        <h1 class="text-xl sm:text-3xl font-bold text-gray-900">Cloud Admin Dashboard</h1>
+                        <p class="text-xs sm:text-sm text-gray-500">Connected to Supabase Cloud. Real-time updates.</p>
+                    </div>
+                    <button onclick="logoutAdmin()" class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-300">Logout Admin</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Cloud Revenue</p>
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">₹${totalRevenue.toLocaleString('en-IN')}</h3>
+                    </div>
+                    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Cloud Orders</p>
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">${orders.length}</h3>
+                    </div>
+                    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Catalog Products</p>
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mt-1">${products.length}</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-4 sm:p-6 mb-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4"><i class="fa-solid fa-plus-circle text-orange-600 mr-2"></i> Add New Product to Cloud</h3>
+                    <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Product Name</label>
+                            <input type="text" id="new-name" required placeholder="e.g. Kashmiri Kahwa" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Price (INR ₹)</label>
+                            <input type="number" id="new-price" required placeholder="599" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Category</label>
+                            <input type="text" id="new-category" required placeholder="Groceries" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Initial Stock</label>
+                            <input type="number" id="new-stock" required placeholder="20" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Image URL</label>
+                            <input type="url" id="new-image" required placeholder="https://images.unsplash.com/..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+                            <input type="text" id="new-desc" required placeholder="Short description..." class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <button type="submit" class="bg-orange-600 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-orange-700 transition text-sm">Publish to Cloud</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-4 sm:p-6 mb-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4"><i class="fa-solid fa-box-open text-orange-600 mr-2"></i> Cloud Customer Orders & Addresses</h3>
+                    ${orders.length === 0 ? '<p class="text-xs sm:text-sm text-gray-500">No cloud orders received yet.</p>' : `
+                        <div class="space-y-4">
+                            ${orders.map(o => `
+                                <div class="border rounded-xl p-3 sm:p-4 bg-gray-50/50 text-xs sm:text-sm">
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b pb-2 gap-1">
+                                        <div>
+                                            <span class="font-bold text-orange-600">${o.id}</span>
+                                            <span class="text-[10px] text-gray-500 ml-2">${o.date}</span>
+                                        </div>
+                                        <div class="font-bold text-gray-900">Total: ₹${o.total.toLocaleString('en-IN')}</div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                                        <div>
+                                            <p class="font-semibold text-gray-700">Customer:</p>
+                                            <p>${o.customer.name} | +91 ${o.customer.phone}</p>
+                                            <p class="text-gray-600 mt-0.5"><i class="fa-solid fa-location-dot text-orange-600"></i> ${o.customer.address}, ${o.customer.city}, ${o.customer.state} - ${o.customer.pincode}</p>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-700">Items:</p>
+                                            <ul class="list-disc list-inside text-gray-600">
+                                                ${o.items.map(i => `<li>${i.name} (x${i.qty})</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button onclick="deleteOrder('${o.id}')" class="text-xs text-red-600 hover:underline">Clear Cloud Order</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4"><i class="fa-solid fa-warehouse text-orange-600 mr-2"></i> Cloud Inventory Management</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead>
+                                <tr class="border-b bg-gray-50 text-gray-600">
+                                    <th class="p-2 sm:p-3">Product</th>
+                                    <th class="p-2 sm:p-3">Price</th>
+                                    <th class="p-2 sm:p-3">Stock</th>
+                                    <th class="p-2 sm:p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${products.map(p => `
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="p-2 sm:p-3 flex items-center space-x-2">
+                                            <img src="${p.image}" class="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-lg">
+                                            <span class="font-semibold text-gray-900 line-clamp-1">${p.name}</span>
+                                        </td>
+                                        <td class="p-2 sm:p-3 font-bold">₹${p.price}</td>
+                                        <td class="p-2 sm:p-3">
+                                            <span class="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold ${p.stock > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${p.stock}</span>
+                                        </td>
+                                        <td class="p-2 sm:p-3 text-right space-x-1 sm:space-x-2">
+                                            <button onclick="restockProduct(${p.id})" class="text-[11px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-semibold">+ Stock</button>
+                                            <button onclick="deleteProduct(${p.id})" class="text-[11px] bg-red-50 text-red-600 px-2 py-1 rounded font-semibold">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function handleAddProduct(event) {
+            event.preventDefault();
+            const newProd = {
+                id: Date.now(),
+                name: document.getElementById('new-name').value,
+                price: Number(document.getElementById('new-price').value),
+                category: document.getElementById('new-category').value,
+                stock: Number(document.getElementById('new-stock').value),
+                image: document.getElementById('new-image').value,
+                description: document.getElementById('new-desc').value
+            };
+
+            const { error } = await db.from('products').insert([newProd]);
+            if (error) {
+                alert("Error adding product to cloud: " + error.message);
+                return;
+            }
+
+            products.push(newProd);
+            alert("Product successfully published to your Supabase cloud database!");
+            renderAdminView(document.getElementById('main-container'));
+        }
+
+        async function restockProduct(id) {
+            const p = products.find(prod => prod.id === id);
+            if (p) {
+                const add = prompt(`Add stock for ${p.name}:`, "10");
+                if (add && !isNaN(add)) {
+                    p.stock += Number(add);
+                    await db.from('products').update({ stock: p.stock }).eq('id', id);
+                    renderAdminView(document.getElementById('main-container'));
+                }
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (confirm("Delete this product from cloud?")) {
+                await db.from('products').delete().eq('id', id);
+                products = products.filter(p => p.id !== id);
+                renderAdminView(document.getElementById('main-container'));
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (confirm("Delete order record from cloud?")) {
+                await db.from('orders').delete().eq('id', id);
+                orders = orders.filter(o => o.id !== id);
+                renderAdminView(document.getElementById('main-container'));
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            document.getElementById('nav-admin-btn').innerHTML = `<i class="fa-solid fa-lock text-xs"></i><span class="hidden sm:inline">Admin</span>`;
+            switchView('store');
+        }
+
+        // 启动时初始化加载云端数据
+        initCloudData();
+    </script>
+</body>
+</html>
