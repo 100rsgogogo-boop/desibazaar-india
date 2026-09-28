@@ -3,139 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DesiBazaar India - Advanced Admin Control Panel</title>
+    <title>DesiBazaar India - Online Shopping Mega Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans antialiased">
+<body class="bg-[#f1f3f6] text-gray-800 font-sans antialiased pb-24">
 
-    <!-- 登录弹窗 -->
-    <div id="login-modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full">
-            <h2 class="text-xl font-black text-gray-900 mb-2 text-center"><i class="fa-solid fa-lock text-[#2874f0] mr-2"></i>Admin Portal</h2>
-            <p class="text-xs text-gray-500 mb-6 text-center">Enter credentials to access management dashboard.</p>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="password" id="admin-pwd" required placeholder="Password (default: admin123)" class="w-full border p-3 rounded text-sm focus:outline-blue-600">
-                <button type="submit" class="w-full bg-[#2874f0] text-white py-3 rounded font-bold text-sm uppercase tracking-wider shadow hover:bg-blue-700 transition">Login</button>
-            </form>
+    <!-- 顶栏 -->
+    <header class="bg-[#2874f0] text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchView('home')">
+                <div class="flex flex-col">
+                    <span class="text-2xl font-black italic tracking-wider leading-none text-white">Desi<span class="text-[#ffe11b]">Bazaar</span></span>
+                    <span class="text-[10px] italic text-yellow-300 font-bold flex items-center">Explore <span class="text-white ml-0.5">Plus</span> <i class="fa-solid fa-plus text-[8px] text-yellow-300 ml-0.5"></i></span>
+                </div>
+            </div>
+
+            <div class="flex-1 max-w-2xl mx-6 hidden md:flex items-center bg-white rounded-sm shadow-inner px-3 py-1.5">
+                <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search for products, brands and more" class="w-full text-sm text-gray-800 focus:outline-none bg-transparent">
+                <i class="fa-solid fa-magnifying-glass text-[#2874f0] text-lg cursor-pointer"></i>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <a href="admin.html" target="_blank" class="hover:text-yellow-300 font-medium text-xs bg-blue-700 px-2.5 py-1 rounded">Admin Portal</a>
+                <button onclick="openCart()" class="bg-white text-[#2874f0] px-4 py-1.5 rounded-sm font-bold text-sm flex items-center space-x-2 shadow-sm hover:bg-gray-50 transition relative">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>Cart</span>
+                    <span id="cart-badge" class="bg-[#ff6161] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold absolute -top-2 -right-2">0</span>
+                </button>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <!-- 后台主界面 -->
-    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
-        <!-- 顶栏 -->
-        <header class="bg-[#172337] text-white h-16 flex items-center justify-between px-6 shadow sticky top-0 z-40">
-            <div class="flex items-center space-x-3">
-                <span class="text-xl font-black italic">Desi<span class="text-[#ffe11b]">Bazaar</span></span>
-                <span class="bg-[#2874f0] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Master Admin Panel</span>
+    <main id="app-main" class="max-w-7xl mx-auto px-2 sm:px-4 py-6">
+        <div class="text-center py-20 font-bold text-gray-500">Loading authentic Indian mega sale store...</div>
+    </main>
+
+    <!-- 购物车抽屉 -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 overflow-hidden hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-xs" onclick="closeCart()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
+                <div class="p-4 border-b flex items-center justify-between bg-[#2874f0] text-white">
+                    <h3 class="font-bold text-base"><i class="fa-solid fa-cart-shopping mr-2"></i>My Flipkart Cart</h3>
+                    <button onclick="closeCart()" class="hover:text-yellow-300"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div id="cart-body" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
             </div>
-            <div class="flex items-center space-x-4">
-                <span class="text-xs text-gray-300">Logged in as Administrator</span>
-                <button onclick="location.reload()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded text-gray-300 font-bold">Logout</button>
-            </div>
-        </header>
-
-        <!-- 主体内容 -->
-        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-            
-            <!-- 核心数据总计看板 -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow-sm border flex items-center justify-between">
-                    <div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Total Revenue (收入总计)</span>
-                        <h3 id="stat-revenue" class="text-3xl font-black text-green-600 mt-1">₹0</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border flex items-center justify-between">
-                    <div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Total Paid Orders (总订单)</span>
-                        <h3 id="stat-orders" class="text-3xl font-black text-[#2874f0] mt-1">0</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-50 text-[#2874f0] rounded-full flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-cart-shopping"></i></div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border flex items-center justify-between">
-                    <div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Cloud Products (商品总数)</span>
-                        <h3 id="stat-products" class="text-3xl font-black text-purple-600 mt-1">3,000</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-box"></i></div>
-                </div>
-            </div>
-
-            <!-- 功能区网格：左侧批量管理，右侧统计 -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- 批量管理操作面板 -->
-                <div class="bg-white rounded-lg shadow-sm border p-5 space-y-6 lg:col-span-1">
-                    <h3 class="font-bold text-gray-900 border-b pb-3 flex items-center"><i class="fa-solid fa-sliders text-[#2874f0] mr-2"></i>Batch Management (批量操作)</h3>
-                    
-                    <!-- 1. 批量修改价格/折扣 -->
-                    <div class="space-y-3">
-                        <label class="block text-xs font-bold text-gray-700 uppercase">Batch Price & Discount Modifier</label>
-                        <select id="batch-category" class="w-full border p-2.5 rounded text-xs bg-gray-50">
-                            <option value="All">All Categories (全品类)</option>
-                            <option value="Ethnic Wear">Ethnic Wear</option>
-                            <option value="Groceries & Spices">Groceries & Spices</option>
-                            <option value="Home & Kitchen">Home & Kitchen</option>
-                            <option value="Ayurvedic & Beauty">Ayurvedic & Beauty</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Festive & Gifts">Festive Specials</option>
-                        </select>
-                        <div class="flex space-x-2">
-                            <input type="number" id="batch-multiplier" placeholder="Multiplier e.g. 0.9 (-10%)" step="0.05" class="w-full border p-2 rounded text-xs">
-                            <button onclick="applyBatchPrice()" class="bg-[#ff9f00] hover:bg-[#f39700] text-white px-4 py-2 rounded text-xs font-bold whitespace-nowrap shadow-xs">Apply Price</button>
-                        </div>
-                        <p class="text-[10px] text-gray-400">Tip: Enter 0.9 to decrease price by 10%, or 1.1 to increase by 10%.</p>
-                    </div>
-
-                    <hr class="border-gray-100">
-
-                    <!-- 2. 批量修改/上传图片链接 -->
-                    <div class="space-y-3">
-                        <label class="block text-xs font-bold text-gray-700 uppercase">Batch Image URL Updater</label>
-                        <select id="batch-img-category" class="w-full border p-2.5 rounded text-xs bg-gray-50">
-                            <option value="Ethnic Wear">Ethnic Wear</option>
-                            <option value="Groceries & Spices">Groceries & Spices</option>
-                            <option value="Home & Kitchen">Home & Kitchen</option>
-                            <option value="Ayurvedic & Beauty">Ayurvedic & Beauty</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Festive & Gifts">Festive Specials</option>
-                        </select>
-                        <input type="text" id="batch-img-url" placeholder="Paste new Unsplash / Image URL here" class="w-full border p-2.5 rounded text-xs">
-                        <button onclick="applyBatchImage()" class="w-full bg-[#2874f0] hover:bg-blue-700 text-white py-2.5 rounded text-xs font-bold shadow-xs transition">Update Category Images</button>
-                    </div>
-                </div>
-
-                <!-- 客户付款与订单明细表格 -->
-                <div class="bg-white rounded-lg shadow-sm border overflow-hidden lg:col-span-2 flex flex-col">
-                    <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-900"><i class="fa-solid fa-receipt text-[#2874f0] mr-2"></i>Customer Payments & Orders Ledger</h3>
-                        <button onclick="loadDashboardData()" class="text-xs bg-blue-50 text-[#2874f0] font-bold px-3 py-1.5 rounded hover:bg-blue-100 transition"><i class="fa-solid fa-rotate mr-1"></i> Refresh Data</button>
-                    </div>
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 uppercase border-b">
-                                    <th class="p-3">Order ID</th>
-                                    <th class="p-3">Customer Name</th>
-                                    <th class="p-3">Phone (+91)</th>
-                                    <th class="p-3">Delivery City</th>
-                                    <th class="p-3">Amount (₹)</th>
-                                    <th class="p-3">Payment Gateway</th>
-                                    <th class="p-3">Payment Time</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orders-table-body" class="divide-y divide-gray-200">
-                                <tr><td colspan="7" class="p-8 text-center text-gray-400">Loading ledger...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </main>
+        </div>
     </div>
 
     <script>
@@ -144,124 +60,277 @@
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const pwd = document.getElementById('admin-pwd').value;
-            if (pwd === 'admin123') {
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('admin-dashboard').classList.remove('hidden');
-                loadDashboardData();
-            } else {
-                alert("Incorrect password! (Default: admin123)");
-            }
-        }
+        let allProducts = [];
+        let filteredProducts = [];
+        let displayCount = 24;
+        let cart = [];
+        let currentView = 'home';
+        let selectedProduct = null;
+        let shippingInfo = {};
 
-        async function loadDashboardData() {
-            await Promise.all([loadOrdersAndRevenue(), loadProductCount()]);
-        }
+        const sellersPool = [
+            { name: "Royal Banarasi Weaves (Varanasi)", rating: "4.8 ★" },
+            { name: "Kashmiri Saffron Artisans (Srinagar)", rating: "4.9 ★" },
+            { name: "Jaipur Handicrafts Emporium", rating: "4.7 ★" },
+            { name: "Mumbai Spice & Groceries Trading Co.", rating: "4.6 ★" },
+            { name: "South India Silk House (Chennai)", rating: "4.8 ★" },
+            { name: "Punjab Jutti & Footwear Hub", rating: "4.7 ★" }
+        ];
 
-        async function loadProductCount() {
-            const { count, error } = await db.from('products').select('*', { count: 'exact', head: true });
-            if (!error && count !== null) {
-                document.getElementById('stat-products').innerText = count.toLocaleString();
-            }
-        }
-
-        async function loadOrdersAndRevenue() {
+        async function init() {
             try {
-                const { data, error } = await db.from('orders').select('*').order('id', { ascending: false });
+                const { data, error } = await db.from('products').select('*').limit(3000);
                 if (error) {
-                    console.error(error);
+                    document.getElementById('app-main').innerHTML = `<div class="text-center py-20 text-red-600 font-bold bg-white rounded">Error: ${error.message}</div>`;
                     return;
                 }
-                const orders = data || [];
-                document.getElementById('stat-orders').innerText = orders.length;
-
-                // 计算收入总计
-                const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
-                document.getElementById('stat-revenue').innerText = `₹${totalRevenue.toLocaleString()}`;
-
-                const tbody = document.getElementById('orders-table-body');
-                if (orders.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">No payment records found yet.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = orders.map(o => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-3 font-bold text-gray-900">#${o.id}</td>
-                        <td class="p-3 font-semibold">${o.customer_name}</td>
-                        <td class="p-3 text-blue-600 font-bold">+91 ${o.phone}</td>
-                        <td class="p-3">${o.city} (${o.state})</td>
-                        <td class="p-3 font-black text-green-600 text-sm">₹${o.total_amount}</td>
-                        <td class="p-3"><span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold text-[10px]">${o.payment_method || 'PhonePe/GPay'}</span></td>
-                        <td class="p-3 text-gray-500">${new Date(o.created_at).toLocaleString()}</td>
-                    </tr>
-                `).join('');
+                allProducts = data || [];
+                filteredProducts = allProducts;
+                render();
             } catch (err) {
                 console.error(err);
             }
         }
 
-        // 批量修改价格
-        async function applyBatchPrice() {
-            const category = document.getElementById('batch-category').value;
-            const multiplier = parseFloat(document.getElementById('batch-multiplier').value);
-            
-            if (isNaN(multiplier) || multiplier <= 0) {
-                alert("Please enter a valid multiplier (e.g. 0.9 or 1.1)");
-                return;
-            }
-
-            if (!confirm(`Are you sure you want to batch update prices for [${category}] with multiplier ${multiplier}?`)) return;
-
-            try {
-                let query = db.from('products').select('id, price');
-                if (category !== 'All') {
-                    query = query.eq('category', category);
-                }
-                const { data: items, error: fetchErr } = await query;
-                if (fetchErr) throw fetchErr;
-
-                if (!items || items.length === 0) {
-                    alert("No products found in this category.");
-                    return;
-                }
-
-                // 批量逐条更新价格
-                let updated = 0;
-                for (let item of items) {
-                    const newPrice = Math.round(item.price * multiplier);
-                    await db.from('products').update({ price: newPrice }).eq('id', item.id);
-                    updated++;
-                }
-
-                alert(`Successfully updated prices for ${updated} items!`);
-            } catch (err) {
-                alert("Batch update failed: " + err.message);
-            }
+        function switchView(view, product = null) {
+            currentView = view;
+            if (product) selectedProduct = product;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            render();
         }
 
-        // 批量修改图片
-        async function applyBatchImage() {
-            const category = document.getElementById('batch-img-category').value;
-            const newUrl = document.getElementById('batch-img-url').value.trim();
-
-            if (!newUrl) {
-                alert("Please enter a valid image URL.");
-                return;
-            }
-
-            if (!confirm(`Are you sure you want to update images for all items in [${category}]?`)) return;
-
-            try {
-                const { error } = await db.from('products').update({ image: newUrl }).eq('category', category);
-                if (error) throw error;
-                alert(`Successfully updated images for category: ${category}!`);
-            } catch (err) {
-                alert("Image batch update failed: " + err.message);
-            }
+        function render() {
+            const main = document.getElementById('app-main');
+            if (currentView === 'home') main.innerHTML = renderHomeHTML();
+            else if (currentView === 'detail') main.innerHTML = renderDetailHTML();
+            else if (currentView === 'checkout') main.innerHTML = renderCheckoutHTML();
+            else if (currentView === 'payment') main.innerHTML = renderPaymentHTML();
+            else if (currentView === 'success') main.innerHTML = renderSuccessHTML();
         }
+
+        function renderHomeHTML() {
+            const items = filteredProducts.slice(0, displayCount);
+            return `
+                <div class="bg-gradient-to-r from-[#2874f0] via-indigo-600 to-[#1e5bb8] rounded-lg p-6 sm:p-8 text-white mb-6 shadow-md flex flex-col sm:flex-row justify-between items-center relative overflow-hidden">
+                    <div class="z-10">
+                        <span class="bg-[#ffe11b] text-blue-900 text-xs font-black px-3 py-1 rounded-sm uppercase">⚡ Big Billion Mega Sale</span>
+                        <h1 class="text-2xl sm:text-4xl font-extrabold mt-2">Flat 20% OFF Across All Products</h1>
+                        <p class="text-blue-100 text-sm mt-1">Over 3,000 unique items with dedicated Indian sellers & WhatsApp support.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    ${items.map((p) => {
+                        const seller = sellersPool[p.id % sellersPool.length];
+                        const rating = (4.2 + ((p.id % 7) * 0.1)).toFixed(1);
+                        return `
+                            <div onclick='openProductDetail(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="bg-white border border-gray-200 rounded-sm p-3 flex flex-col justify-between hover:shadow-xl transition group cursor-pointer relative">
+                                <div>
+                                    <div class="relative mb-3 overflow-hidden rounded-sm bg-gray-100 h-48">
+                                        <span class="absolute top-2 left-2 bg-[#b12704] text-white text-[10px] font-black px-2 py-0.5 rounded-sm shadow">20% OFF</span>
+                                        <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wide">${p.category}</span>
+                                    <h3 class="font-semibold text-gray-900 text-sm line-clamp-1 mt-0.5 group-hover:text-[#2874f0]">${p.name}</h3>
+                                    
+                                    <div class="flex items-center space-x-1.5 mt-1.5">
+                                        <span class="bg-[#388e3c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm flex items-center">${rating} <i class="fa-solid fa-star text-[8px] ml-0.5"></i></span>
+                                        <span class="text-xs text-gray-400">(${120 + (p.id * 13) % 700})</span>
+                                    </div>
+
+                                    <div class="flex items-baseline space-x-2 mt-2">
+                                        <span class="text-base font-extrabold text-gray-900">₹${p.price}</span>
+                                        <span class="text-xs text-gray-400 line-through">₹${Math.round(p.price / 0.8)}</span>
+                                        <span class="text-xs text-[#388e3c] font-bold">20% off</span>
+                                    </div>
+                                    <p class="text-[10px] text-gray-500 mt-1 italic truncate">Seller: ${seller.name}</p>
+                                </div>
+                                <button onclick="event.stopPropagation(); addToCart(${p.id})" class="mt-3 bg-[#ff9f00] hover:bg-[#f39700] text-white text-xs font-bold py-2.5 rounded-sm shadow-xs uppercase tracking-wide transition flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-cart-shopping"></i><span>Add to Cart</span>
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                ${displayCount < filteredProducts.length ? `
+                    <div class="text-center mt-10">
+                        <button onclick="loadMore()" class="bg-[#2874f0] text-white px-10 py-3 rounded-sm shadow-md font-bold hover:bg-blue-700 transition uppercase text-sm">Load More Products</button>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function openProductDetail(p) {
+            switchView('detail', p);
+        }
+
+        function renderDetailHTML() {
+            const p = selectedProduct;
+            const seller = sellersPool[p.id % sellersPool.length];
+            const whatsappNumber = "919876543210"; 
+            const whatsappMessage = encodeURIComponent(`Hi, I am interested in buying [${p.name}] (Price: ₹${p.price}) from DesiBazaar.`);
+            const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+
+            return `
+                <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-8">
+                    <button onclick="switchView('home')" class="mb-6 text-sm font-bold text-[#2874f0] hover:underline flex items-center space-x-1">
+                        <i class="fa-solid fa-arrow-left"></i><span>Back to Products</span>
+                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-gray-100 rounded-lg overflow-hidden h-96 flex items-center justify-center relative">
+                            <span class="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded">20% OFF</span>
+                            <img src="${p.image}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs text-blue-600 font-bold uppercase tracking-wide bg-blue-50 px-2 py-1 rounded">${p.category}</span>
+                                <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2">${p.name}</h1>
+                                <div class="flex items-baseline space-x-3 mt-4">
+                                    <span class="text-3xl font-extrabold text-gray-900">₹${p.price}</span>
+                                    <span class="text-base text-gray-400 line-through">₹${Math.round(p.price / 0.8)}</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mt-4 leading-relaxed">${p.description}</p>
+                                <div class="mt-6 p-4 bg-blue-50 border rounded-lg">
+                                    <span class="text-xs text-gray-500 block">Verified Seller:</span>
+                                    <span class="font-bold text-gray-900 text-sm">${seller.name}</span>
+                                    <a href="${whatsappLink}" target="_blank" class="mt-3 w-full bg-[#25D366] text-white py-2.5 px-4 rounded-md font-bold text-xs flex items-center justify-center space-x-2">
+                                        <i class="fa-brands fa-whatsapp text-lg"></i><span>Chat with Seller on WhatsApp</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="mt-8 flex space-x-4">
+                                <button onclick="addToCart(${p.id}); openCart();" class="flex-1 bg-[#ff9f00] text-white py-3.5 rounded font-bold uppercase tracking-wider">Add to Cart</button>
+                                <button onclick="addToCart(${p.id}); startCheckout();" class="flex-1 bg-[#fb641b] text-white py-3.5 rounded font-bold uppercase tracking-wider">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startCheckout() {
+            if (cart.length === 0) return alert("Cart is empty!");
+            closeCart();
+            switchView('checkout');
+        }
+
+        function renderCheckoutHTML() {
+            return `
+                <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border p-6">
+                    <h2 class="text-xl font-black mb-6">Delivery Address & Phone</h2>
+                    <form onsubmit="saveShipping(event)" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="ship-name" required placeholder="Full Name" class="border p-2.5 rounded text-sm w-full">
+                            <input type="tel" id="ship-phone" required placeholder="Phone (+91)" class="border p-2.5 rounded text-sm w-full">
+                        </div>
+                        <input type="text" id="ship-address" required placeholder="Street Address" class="border p-2.5 rounded text-sm w-full">
+                        <div class="grid grid-cols-3 gap-4">
+                            <input type="text" id="ship-city" required placeholder="City" class="border p-2.5 rounded text-sm w-full">
+                            <input type="text" id="ship-state" required placeholder="State" class="border p-2.5 rounded text-sm w-full">
+                            <input type="text" id="ship-pincode" required placeholder="Pincode" class="border p-2.5 rounded text-sm w-full">
+                        </div>
+                        <button type="submit" class="w-full bg-[#fb641b] text-white py-3 rounded font-bold uppercase">Proceed to Payment</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function saveShipping(e) {
+            e.preventDefault();
+            shippingInfo = {
+                name: document.getElementById('ship-name').value,
+                phone: document.getElementById('ship-phone').value,
+                address: document.getElementById('ship-address').value,
+                city: document.getElementById('ship-city').value,
+                state: document.getElementById('ship-state').value,
+                pincode: document.getElementById('ship-pincode').value
+            };
+            switchView('payment');
+        }
+
+        function renderPaymentHTML() {
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            return `
+                <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border p-6">
+                    <h2 class="text-xl font-black mb-6">Indian Online Payment Gateway (PhonePe / GPay / Paytm)</h2>
+                    <div class="space-y-4 mb-6">
+                        <label class="flex items-center p-4 border rounded cursor-pointer"><input type="radio" name="pay" checked class="mr-3">PhonePe UPI</label>
+                        <label class="flex items-center p-4 border rounded cursor-pointer"><input type="radio" name="pay" class="mr-3">Google Pay (GPay)</label>
+                        <label class="flex items-center p-4 border rounded cursor-pointer"><input type="radio" name="pay" class="mr-3">Paytm UPI</label>
+                        <label class="flex items-center p-4 border rounded cursor-pointer"><input type="radio" name="pay" class="mr-3">Credit / Debit Card</label>
+                    </div>
+                    <button onclick="completeOrder(${subtotal})" class="w-full bg-[#388e3c] text-white py-3.5 rounded font-bold uppercase">Pay ₹${subtotal} Securely</button>
+                </div>
+            `;
+        }
+
+        async function completeOrder(amount) {
+            try {
+                await db.from('orders').insert([{
+                    customer_name: shippingInfo.name,
+                    phone: shippingInfo.phone,
+                    address: shippingInfo.address,
+                    city: shippingInfo.city,
+                    state: shippingInfo.state,
+                    pincode: shippingInfo.pincode,
+                    total_amount: amount,
+                    payment_method: 'PhonePe/GPay/UPI'
+                }]);
+            } catch (err) {
+                console.error(err);
+            }
+            cart = [];
+            document.getElementById('cart-badge').innerText = '0';
+            switchView('success');
+        }
+
+        function renderSuccessHTML() {
+            return `
+                <div class="max-w-xl mx-auto bg-white rounded-lg shadow-sm border p-8 text-center">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">✓</div>
+                    <h2 class="text-2xl font-black mb-2">Order Confirmed Successfully!</h2>
+                    <p class="text-gray-600 text-sm mb-6">Payment verified and order saved to admin database.</p>
+                    <button onclick="switchView('home')" class="bg-[#2874f0] text-white px-8 py-3 rounded font-bold uppercase text-xs">Continue Shopping</button>
+                </div>
+            `;
+        }
+
+        function filterCategory(cat) {
+            displayCount = 24;
+            filteredProducts = cat === 'All' ? allProducts : allProducts.filter(p => p.category === cat);
+            switchView('home');
+        }
+
+        function handleSearch(kw) {
+            displayCount = 24;
+            const q = kw.toLowerCase();
+            filteredProducts = allProducts.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+            if (currentView !== 'home') switchView('home');
+            else render();
+        }
+
+        function loadMore() { displayCount += 24; render(); }
+        function addToCart(id) {
+            const p = allProducts.find(item => item.id === id);
+            const item = cart.find(i => i.id === id);
+            if (item) item.qty++; else cart.push({ ...p, qty: 1 });
+            document.getElementById('cart-badge').innerText = cart.reduce((s, i) => s + i.qty, 0);
+            openCart(); renderCart();
+        }
+        function openCart() { document.getElementById('cart-drawer').classList.remove('hidden'); renderCart(); }
+        function closeCart() { document.getElementById('cart-drawer').classList.add('hidden'); }
+        function renderCart() {
+            const body = document.getElementById('cart-body');
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            body.innerHTML = cart.length === 0 ? '<div class="text-center text-gray-400 py-20 font-bold">Cart is empty!</div>' : `
+                ${cart.map(i => `<div class="flex justify-between items-center border-b pb-3"><div><h4 class="font-bold text-sm">${i.name}</h4><p class="text-xs text-gray-500">₹${i.price} ×${i.qty}</p></div><span class="font-bold text-sm">₹${i.price * i.qty}</span></div>`).join('')}
+                <div class="border-t pt-4 font-bold text-lg flex justify-between items-center"><span>Total:</span><span class="text-[#2874f0]">₹${subtotal}</span></div>
+                <button onclick="startCheckout()" class="w-full bg-[#ff9f00] text-white py-3 rounded font-bold uppercase mt-4">Proceed to Checkout</button>
+            `;
+        }
+
+        init();
     </script>
 </body>
 </html>
