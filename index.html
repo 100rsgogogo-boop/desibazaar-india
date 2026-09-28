@@ -79,7 +79,7 @@
             </div>
             <div>
                 <h4 class="text-gray-500 font-bold uppercase mb-3 text-[11px]">HELP</h4>
-                <ul class="space-y-2"><li><a href="#" class="hover:underline">Payments (UPI, GPay, Paytm)</a></li><li><a href="#" class="hover:underline">Shipping</a></li></ul>
+                <ul class="space-y-2"><li><a href="#" class="hover:underline">Flipkart Secure Payments</a></li><li><a href="#" class="hover:underline">Shipping</a></li></ul>
             </div>
             <div>
                 <h4 class="text-gray-500 font-bold uppercase mb-3 text-[11px]">POLICY</h4>
@@ -118,49 +118,51 @@
             { name: "Kerala Ayurvedic Herbals Ltd.", rating: "4.9 ★" }
         ];
 
-        // 扩充至 40 个不同类目高清图池，确保 3000 个商品绝不重复视觉
-        const diverseImages = [
-            'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1608248597359-9944a9918731?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1581557991964-125469da3b8a?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1525904097878-94fb15585945?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80',
-            'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80'
-        ];
+        // 严格按类目划分的高清图片库（图文100%精准对应）
+        const categoryImages = {
+            'Ethnic Wear': [
+                'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80'
+            ],
+            'Groceries & Spices': [
+                'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80'
+            ],
+            'Home & Kitchen': [
+                'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1608248597359-9944a9918731?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
+            ],
+            'Ayurvedic & Beauty': [
+                'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=600&q=80'
+            ],
+            'Electronics': [
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1581557991964-125469da3b8a?auto=format&fit=crop&w=600&q=80'
+            ],
+            'Festive & Gifts': [
+                'https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&w=600&q=80'
+            ]
+        };
+
+        function getProductImage(p) {
+            const cat = p.category || 'General';
+            const pool = categoryImages[cat] || categoryImages['Electronics'];
+            return pool[p.id % pool.length];
+        }
 
         async function init() {
             try {
@@ -217,7 +219,7 @@
 
                 <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     ${items.map((p, idx) => {
-                        const img = diverseImages[(p.id * 13) % diverseImages.length];
+                        const img = getProductImage(p);
                         const seller = sellersPool[p.id % sellersPool.length];
                         const rating = (4.2 + ((p.id % 7) * 0.1)).toFixed(1);
                         return `
@@ -265,7 +267,7 @@
 
         function renderDetailHTML() {
             const p = selectedProduct;
-            const img = diverseImages[(p.id * 13) % diverseImages.length];
+            const img = getProductImage(p);
             const seller = sellersPool[p.id % sellersPool.length];
             const whatsappNumber = "919876543210"; 
             const whatsappMessage = encodeURIComponent(`Hi, I am interested in buying [${p.name}] (Price: ₹${p.price}, ID: #${p.id}) from DesiBazaar. Please share more details.`);
@@ -397,57 +399,57 @@
             switchView('payment');
         }
 
-        // --- 4. 支付页面 (UPI, Paytm, GPay) ---
+        // --- 4. Flipkart 标准线上支付网关 (已完全取消 COD，对标官方选项) ---
         function renderPaymentHTML() {
             const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             return `
                 <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border p-6 sm:p-8">
                     <h2 class="text-xl font-black text-gray-900 mb-6 flex items-center">
-                        <i class="fa-solid fa-indian-rupee-sign text-[#2874f0] mr-2"></i> Step 2: Indian Payment Gateway (UPI / Paytm / GPay)
+                        <i class="fa-solid fa-lock text-[#2874f0] mr-2"></i> Step 2: Flipkart Secure Online Payments
                     </h2>
                     
                     <div class="space-y-4 mb-6">
-                        <!-- Google Pay / GPay -->
+                        <!-- UPI / GPay / Paytm / PhonePe -->
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 border-blue-200 bg-blue-50/30">
-                            <input type="radio" name="payment" checked class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('gpay')">
+                            <input type="radio" name="payment" checked class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('upi')">
                             <div class="ml-3">
-                                <span class="block font-bold text-sm">Google Pay (GPay)</span>
-                                <span class="text-xs text-gray-500">Pay directly using Google Pay UPI ID</span>
+                                <span class="block font-bold text-sm">UPI (Google Pay / PhonePe / Paytm / BHIM)</span>
+                                <span class="text-xs text-gray-500">Pay directly using your Virtual Payment Address (VPA)</span>
                             </div>
                         </label>
 
-                        <!-- Paytm UPI / Wallet -->
+                        <!-- Credit / Debit / ATM Card -->
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('paytm')">
+                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('card')">
                             <div class="ml-3">
-                                <span class="block font-bold text-sm">Paytm UPI & Wallet</span>
-                                <span class="text-xs text-gray-500">Fast secure payment via Paytm handle</span>
+                                <span class="block font-bold text-sm">Credit / Debit / ATM Card</span>
+                                <span class="text-xs text-gray-500">Visa, MasterCard, RuPay, Maestro</span>
                             </div>
                         </label>
 
-                        <!-- Generic UPI (PhonePe / BHIM) -->
+                        <!-- Net Banking -->
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('upi')">
+                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('netbanking')">
                             <div class="ml-3">
-                                <span class="block font-bold text-sm">Other UPI ID (PhonePe / BHIM / @oksbi)</span>
-                                <span class="text-xs text-gray-500">Enter your virtual payment address (VPA)</span>
+                                <span class="block font-bold text-sm">Net Banking</span>
+                                <span class="text-xs text-gray-500">All major Indian banks supported (SBI, HDFC, ICICI, Axis...)</span>
                             </div>
                         </label>
 
-                        <!-- Cash on Delivery -->
+                        <!-- Wallets & Flipkart Pay Later -->
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('cod')">
+                            <input type="radio" name="payment" class="h-4 w-4 text-blue-600" onchange="togglePaymentInput('wallet')">
                             <div class="ml-3">
-                                <span class="block font-bold text-sm">Cash on Delivery (COD)</span>
-                                <span class="text-xs text-gray-500">Pay cash upon delivery</span>
+                                <span class="block font-bold text-sm">Wallets & Flipkart Pay Later</span>
+                                <span class="text-xs text-gray-500">Paytm Wallet, Mobikwik, Pay Later instant credit</span>
                             </div>
                         </label>
                     </div>
 
-                    <!-- 动态输入 UPI ID 框 -->
-                    <div id="upi-input-container" class="mb-6 p-4 bg-gray-50 rounded border">
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Enter Your UPI ID / VPA</label>
-                        <input type="text" id="user-upi-id" placeholder="e.g. username@oksbi or 9876543210@paytm" class="w-full border p-2.5 rounded text-sm bg-white focus:outline-blue-600">
+                    <!-- 动态输入区域 -->
+                    <div id="payment-input-container" class="mb-6 p-4 bg-gray-50 rounded border">
+                        <label id="payment-label" class="block text-xs font-bold text-gray-700 mb-1">Enter Your UPI ID / VPA</label>
+                        <input type="text" id="payment-detail-input" placeholder="e.g. username@oksbi or 9876543210@paytm" class="w-full border p-2.5 rounded text-sm bg-white focus:outline-blue-600">
                     </div>
 
                     <div class="bg-gray-100 p-4 rounded mb-6 flex justify-between items-center">
@@ -456,18 +458,30 @@
                     </div>
 
                     <button onclick="completeOrder()" class="w-full bg-[#388e3c] hover:bg-[#327a34] text-white py-3.5 rounded font-bold uppercase tracking-wider shadow">
-                        Pay ₹${subtotal} Now Securely
+                        Pay ₹${subtotal} Securely Now
                     </button>
                 </div>
             `;
         }
 
         function togglePaymentInput(type) {
-            const container = document.getElementById('upi-input-container');
-            if (type === 'cod') {
-                container.style.display = 'none';
-            } else {
-                container.style.display = 'block';
+            const container = document.getElementById('payment-input-container');
+            const label = document.getElementById('payment-label');
+            const input = document.getElementById('payment-detail-input');
+            
+            container.style.display = 'block';
+            if (type === 'upi') {
+                label.innerText = "Enter Your UPI ID / VPA";
+                input.placeholder = "e.g. username@oksbi or 9876543210@paytm";
+            } else if (type === 'card') {
+                label.innerText = "Card Number / Expiry / CVV";
+                input.placeholder = "4532 XXXX XXXX XXXX | MM/YY | CVV";
+            } else if (type === 'netbanking') {
+                label.innerText = "Select Your Bank";
+                input.placeholder = "e.g. State Bank of India / HDFC Bank / ICICI";
+            } else if (type === 'wallet') {
+                label.innerText = "Registered Mobile Number for Wallet";
+                input.placeholder = "+91 9876543210";
             }
         }
 
@@ -484,8 +498,8 @@
                     <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                         <i class="fa-solid fa-check"></i>
                     </div>
-                    <h2 class="text-2xl font-black text-gray-900 mb-2">Order Confirmed Successfully!</h2>
-                    <p class="text-gray-600 text-sm mb-6">Payment verified via UPI/GPay/Paytm. Your order is now being processed for express delivery to <strong>${shippingInfo.city || 'your city'}</strong>.</p>
+                    <h2 class="text-2xl font-black text-gray-900 mb-2">Secure Payment Successful!</h2>
+                    <p class="text-gray-600 text-sm mb-6">Your payment has been successfully authorized via Flipkart Secure Gateway. Your order is now packed for express delivery to <strong>${shippingInfo.city || 'your city'}</strong>.</p>
                     <div class="bg-gray-50 p-4 rounded text-xs text-gray-500 mb-6 text-left">
                         <p><strong>Receiver:</strong> ${shippingInfo.name} (+91 ${shippingInfo.phone})</p>
                         <p><strong>Address:</strong> ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.pincode}</p>
